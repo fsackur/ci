@@ -1,0 +1,40 @@
+name: Test powershell
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  test-powershell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore dependencies
+        id: restore-dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.local/share/powershell/Modules/
+          key: pwsh-module-cache
+          restore-keys: pwsh-module-cache
+
+      - name: Install dependencies
+        run: ./.build.ps1 -Bootstrap
+
+      - name: Save dependencies
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.local/share/powershell/Modules/
+          key: ${{ steps.restore-dependencies.outputs.cache-primary-key }}
+
+      - name: Build
+        run: Invoke-Build Build
+
+      - name: Test
+        run: Invoke-Build Test

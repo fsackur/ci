@@ -1,0 +1,78 @@
+name: Publish powershell
+
+on:
+  workflow_call:
+    inputs:
+      event_json:
+        required: true
+        type: string
+    secrets:
+      RELEASE_BOT_GITHUB_TOKEN:
+        required: true
+      PSGALLERY_API_KEY:
+        required: true
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  publish-powershell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          token: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
+
+      - name: Restore dependencies
+        id: restore-dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.local/share/powershell/Modules/
+          key: pwsh-module-cache
+          restore-keys: pwsh-module-cache
+
+      - name: Install dependencies
+        if: ${{ steps.restore-dependencies.outputs.cache-hit != 'true' }}
+        run: ./.build.ps1 -Bootstrap
+
+      - name: Save dependencies
+        if: ${{ steps.restore-dependencies.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.local/share/powershell/Modules/
+          key: ${{ steps.restore-dependencies.outputs.cache-primary-key }}
+
+      - name: Update version
+        run: |
+          $Labels = @'
+            ${{ toJson(fromJson(inputs.event_json).pull_request.labels.*.name) }}
+          '@ | ConvertFrom-Json
+
+          $ReleaseLabel = @($Labels) -match '^release-'
+          if ($ReleaseLabel.Count -gt 1)
+          {
+              "Multiple release labels found: $ReleaseLabel" | Write-Host -ForegroundColor Red
+              exit 1
+          }
+
+          $Release = if ($ReleaseLabel) {$ReleaseLabel -replace '^release-'} else {'${{ inputs.release }}'}
+
+          Invoke-Build UpdateVersion -Release $Release
+
+      - name: Test
+        run: |
+          Invoke-Build Build, Test
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "dusty-release-bot"
+          git config --global user.email "release-bot@dustyfox.uk"
+
+          Invoke-Build Tag, Push, GithubRelease, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
