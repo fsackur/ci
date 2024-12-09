@@ -58,4 +58,4 @@ jobs:
           git config --global user.name "dusty-release-bot"
           git config --global user.email "release-bot@dustyfox.uk"
 
-          Invoke-Build Tag, Push, GithubRelease, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
+          Invoke-Build Tag, Push, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
