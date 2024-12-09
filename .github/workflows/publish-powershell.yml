@@ -28,24 +28,7 @@ jobs:
           fetch-tags: true
           token: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
 
-      - name: Restore dependencies
-        id: restore-dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.local/share/powershell/Modules/
-          key: pwsh-module-cache
-          restore-keys: pwsh-module-cache
-
-      - name: Install dependencies
-        if: ${{ steps.restore-dependencies.outputs.cache-hit != 'true' }}
-        run: ./.build.ps1 -Bootstrap
-
-      - name: Save dependencies
-        if: ${{ steps.restore-dependencies.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.local/share/powershell/Modules/
-          key: ${{ steps.restore-dependencies.outputs.cache-primary-key }}
+      - uses: fsackur/ci/.github/actions/setup-powershell@main
 
       - name: Update version
         run: |
