@@ -32,37 +32,38 @@ jobs:
           app-id: 1082187  # dusty-release-bot-app
           private-key: ${{ secrets.DUSTY_RELEASE_BOT_PRIVATE_KEY }}
 
-      # - name: Get bot user ID
-      #   id: bot-id
-      #   env:
-      #     GH_TOKEN: ${{ steps.app-token.outputs.token }}
-      #   shell: bash
-      #   run: |
-      #     echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+      - name: Get bot user ID
+        id: bot-id
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        shell: bash
+        run: |
+          echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
         with:
+          # ref: main
           fetch-tags: true
           token: ${{ steps.app-token.outputs.token }}
 
-      - uses: fsackur/ci/.github/actions/setup-powershell@main
+      # - uses: fsackur/ci/.github/actions/setup-powershell@main
 
-      - name: Update version
-        run: |
-          $Labels = @'
-            ${{ toJson(fromJson(inputs.event_json).pull_request.labels.*.name) }}
-          '@ | ConvertFrom-Json
+      # - name: Update version
+      #   run: |
+      #     $Labels = @'
+      #       ${{ toJson(fromJson(inputs.event_json).pull_request.labels.*.name) }}
+      #     '@ | ConvertFrom-Json
 
-          $ReleaseLabel = @($Labels) -match '^release-'
-          if ($ReleaseLabel.Count -gt 1)
-          {
-              "Multiple release labels found: $ReleaseLabel" | Write-Host -ForegroundColor Red
-              exit 1
-          }
+      #     $ReleaseLabel = @($Labels) -match '^release-'
+      #     if ($ReleaseLabel.Count -gt 1)
+      #     {
+      #         "Multiple release labels found: $ReleaseLabel" | Write-Host -ForegroundColor Red
+      #         exit 1
+      #     }
 
-          $Release = if ($ReleaseLabel) {$ReleaseLabel -replace '^release-'} else {'${{ inputs.release }}'}
+      #     $Release = if ($ReleaseLabel) {$ReleaseLabel -replace '^release-'} else {'${{ inputs.release }}'}
 
-          Invoke-Build UpdateVersion -Release $Release
+      #     Invoke-Build UpdateVersion -Release $Release
 
       - name: Test
         run: |
@@ -77,4 +78,6 @@ jobs:
           git config --global user.email '${{ steps.bot-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
           git remote set-url origin https://${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}
 
-          Invoke-Build Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
+          git branch -vv
+
+          # Invoke-Build Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
