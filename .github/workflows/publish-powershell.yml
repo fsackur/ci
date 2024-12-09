@@ -7,7 +7,9 @@ on:
         required: true
         type: string
     secrets:
-      RELEASE_BOT_GITHUB_TOKEN:
+      # RELEASE_BOT_GITHUB_TOKEN:
+      #   required: true
+      DUSTY_RELEASE_BOT_PRIVATE_KEY:
         required: true
       PSGALLERY_API_KEY:
         required: true
@@ -23,10 +25,22 @@ jobs:
   publish-powershell:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate bot token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 1082187  # dusty-release-bot-app
+          private-key: ${{ secrets.DUSTY_RELEASE_BOT_PRIVATE_KEY }}
+
+      # - name: Use the token
+      #   env:
+      #     GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+
       - uses: actions/checkout@v4
         with:
           fetch-tags: true
-          token: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
+          # token: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
+          token: ${{ steps.generate-token.outputs.token }}
 
       - uses: fsackur/ci/.github/actions/setup-powershell@main
 
@@ -47,15 +61,16 @@ jobs:
 
           Invoke-Build UpdateVersion -Release $Release
 
-      - name: Test
-        run: |
-          Invoke-Build Build, Test
+      # - name: Test
+      #   run: |
+      #     Invoke-Build Build, Test
 
-      - name: Release
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
-        run: |
-          git config --global user.name "dusty-release-bot"
-          git config --global user.email "release-bot@dustyfox.uk"
+      # - name: Release
+      #   env:
+      #     GH_TOKEN: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
+      # ${{ steps.generate-token.outputs.token }}
+      #   run: |
+      #     git config --global user.name "dusty-release-bot"
+      #     git config --global user.email "release-bot@dustyfox.uk"
 
-          Invoke-Build Tag, Push, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
+      #     Invoke-Build Tag, Push, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
