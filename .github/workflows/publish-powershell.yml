@@ -78,4 +78,6 @@ jobs:
           git config --global user.email '${{ steps.bot-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
           git remote set-url origin https://${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}
 
+          Invoke-Build Tag
+          git push -f
           Invoke-Build Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
