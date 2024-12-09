@@ -25,6 +25,13 @@ jobs:
   publish-powershell:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate JWT
+        id: jwt
+        uses: fsackur/ci/.github/actions/create-app-jwt@main
+        with:
+          client-id: Iv23livEMJ78hqrlVA1o  # dusty-release-bot-app
+          private-key: ${{ secrets.DUSTY_RELEASE_BOT_PRIVATE_KEY }}
+
       - name: Generate bot token
         id: generate-token
         uses: actions/create-github-app-token@v1

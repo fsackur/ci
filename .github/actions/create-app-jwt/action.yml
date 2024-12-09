@@ -1,0 +1,54 @@
+name: Generate app JWT
+description: Generates a JWT for a GitHub app
+
+inputs:
+  client-id:
+    description: App client ID
+    required: true
+  private-key:
+    description: App private key
+    required: true
+
+outputs:
+  token:
+    description: JWT
+    value: ${{ steps.jwt.outputs.random-id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate JWT
+      id: jwt
+      shell: pwsh
+      run: |
+        $ClientId = '${{ inputs.client-id }}'
+        $PrivateKey = '${{ inputs.private-key }}'
+
+        $JsonHeader = @{
+            alg = "RS256"
+            typ = "JWT"
+        } | ConvertTo-Json
+        $Header = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($JsonHeader))
+        $Header = $Header.TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        $JsonPayload = @{
+            iat = [DateTimeOffset]::UtcNow.AddSeconds(-10).ToUnixTimeSeconds()
+            exp = [DateTimeOffset]::UtcNow.AddMinutes(10).ToUnixTimeSeconds()
+            iss = $ClientId
+        } | ConvertTo-Json
+        $Payload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($JsonPayload))
+        $Payload = $Payload.TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        $Rsa = [Security.Cryptography.RSA]::Create()
+        $Rsa.ImportFromPem($PrivateKey)
+
+        $SigBytes = $Rsa.SignData(
+            [Text.Encoding]::UTF8.GetBytes("$Header.$Payload"),
+            [Security.Cryptography.HashAlgorithmName]::SHA256,
+            [Security.Cryptography.RSASignaturePadding]::Pkcs1
+        )
+
+        $Signature = [Convert]::ToBase64String($SigBytes)
+        $Signature = $Signature.TrimEnd('=').Replace('+', '-').Replace('/', '_')
+
+        Write-Output "$Header.$Payload.$Signature"
