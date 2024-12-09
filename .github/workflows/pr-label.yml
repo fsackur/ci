@@ -1,0 +1,33 @@
+name: Release label
+
+on:
+  workflow_call:
+    inputs:
+      label_json:
+        required: true
+        type: string
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  pr-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for release label
+        run: |
+          $Labels = '${{ inputs.label_json }}' | ConvertFrom-Json
+
+          $ReleaseLabel = @($Labels) -match '^release-'
+          if (-not $ReleaseLabel)
+          {
+              "No release label found. Apply one of release-patch, release-minor, release-major." | Write-Host -ForegroundColor Red
+              exit 1
+          }
+
+          if ($ReleaseLabel.Count -gt 1)
+          {
+              "Multiple release labels found: $($ReleaseLabel -join ', '). Remove $($ReleaseLabel.Count - 1)." | Write-Host -ForegroundColor Red
+              exit 1
+          }
