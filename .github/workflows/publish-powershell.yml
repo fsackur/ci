@@ -7,7 +7,7 @@ on:
         required: true
         type: string
     secrets:
-      RELEASE_BOT_GITHUB_TOKEN:
+      DUSTY_RELEASE_BOT_PRIVATE_KEY:
         required: true
       PSGALLERY_API_KEY:
         required: true
@@ -23,27 +23,33 @@ jobs:
   publish-powershell:
     runs-on: ubuntu-latest
     steps:
+      - name: Restore dependencies
+        uses: fsackur/ci/.github/actions/setup-powershell@main
+
+      - name: Generate bot token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 1082187
+          private-key: ${{ secrets.DUSTY_RELEASE_BOT_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           fetch-tags: true
-          token: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
-
-      - uses: fsackur/ci/.github/actions/setup-powershell@main
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Update version
         run: |
-          $Labels = @'
-            ${{ toJson(fromJson(inputs.event_json).pull_request.labels.*.name) }}
-          '@ | ConvertFrom-Json
+          $PrLabels = '${{ toJson(fromJson(inputs.event_json).pull_request.labels.*.name) }}' | ConvertFrom-Json
+          $ManualRelease = '${{ inputs.release }}'
 
-          $ReleaseLabel = @($Labels) -match '^release-'
+          $ReleaseLabel = @($PrLabels) -match '^release-'
           if ($ReleaseLabel.Count -gt 1)
           {
               "Multiple release labels found: $ReleaseLabel" | Write-Host -ForegroundColor Red
               exit 1
           }
-
-          $Release = if ($ReleaseLabel) {$ReleaseLabel -replace '^release-'} else {'${{ inputs.release }}'}
+          $Release = if ($ReleaseLabel) {$ReleaseLabel -replace '^release-'} else {$ManualRelease}
 
           Invoke-Build UpdateVersion -Release $Release
 
@@ -53,9 +59,9 @@ jobs:
 
       - name: Release
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git config --global user.name "dusty-release-bot"
-          git config --global user.email "release-bot@dustyfox.uk"
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.app-token.outputs.installation-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
 
-          Invoke-Build Tag, Push, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
+          Invoke-Build Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'

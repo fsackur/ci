@@ -283,10 +283,19 @@ task Tag ParseManifest, {
 }
 
 task Push {
-    git push
-    assert($?)
-    git push --tags
-    assert($?)
+    $RemoteBranch = git rev-parse --abbrev-ref --symbolic-full-name "@{upstream}"
+    $Output = git fetch ($RemoteBranch -replace '/.*') *>&1
+    assert $? ($Output | Out-String)
+
+    $MergeBase = git merge-base HEAD $RemoteBranch
+    $RemoteHead = git rev-parse $RemoteBranch
+    assert ($RemoteHead -eq $MergeBase) "Remote branch is ahead"
+
+    $Output = git push *>&1
+    assert $? ($Output | Out-String)
+
+    $Output = git push --tags *>&1
+    assert $? ($Output | Out-String)
 }
 
 task BuildDir ParseManifest, {
