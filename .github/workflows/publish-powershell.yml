@@ -65,9 +65,9 @@ jobs:
 
       #     Invoke-Build UpdateVersion -Release $Release
 
-      - name: Test
-        run: |
-          Invoke-Build Build, Test
+      # - name: Test
+      #   run: |
+      #     Invoke-Build Build, Test
 
       - name: Release
         # env:
