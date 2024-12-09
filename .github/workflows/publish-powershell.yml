@@ -25,12 +25,12 @@ jobs:
   publish-powershell:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate JWT
-        id: jwt
-        uses: fsackur/ci/.github/actions/create-app-jwt@main
-        with:
-          client-id: Iv23livEMJ78hqrlVA1o  # dusty-release-bot-app
-          private-key: ${{ secrets.DUSTY_RELEASE_BOT_PRIVATE_KEY }}
+      # - name: Generate JWT
+      #   id: jwt
+      #   uses: fsackur/ci/.github/actions/create-app-jwt@main
+      #   with:
+      #     client-id: Iv23livEMJ78hqrlVA1o  # dusty-release-bot-app
+      #     private-key: ${{ secrets.DUSTY_RELEASE_BOT_PRIVATE_KEY }}
 
       - name: Generate bot token
         id: generate-token
@@ -68,16 +68,16 @@ jobs:
 
           Invoke-Build UpdateVersion -Release $Release
 
-      # - name: Test
-      #   run: |
-      #     Invoke-Build Build, Test
+      - name: Test
+        run: |
+          Invoke-Build Build, Test
 
-      # - name: Release
-      #   env:
-      #     GH_TOKEN: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
-      # ${{ steps.generate-token.outputs.token }}
-      #   run: |
-      #     git config --global user.name "dusty-release-bot"
-      #     git config --global user.email "release-bot@dustyfox.uk"
+      - name: Release
+        env:
+          # GH_TOKEN: ${{ secrets.RELEASE_BOT_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          git config --global user.name "dusty-release-bot"
+          git config --global user.email "release-bot@dustyfox.uk"
 
-      #     Invoke-Build Tag, Push, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
+          Invoke-Build Tag, Push, Publish -PSGalleryApiKey '${{ secrets.PSGALLERY_API_KEY }}'
