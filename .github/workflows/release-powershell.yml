@@ -23,9 +23,6 @@ jobs:
   release-powershell:
     runs-on: ubuntu-latest
     steps:
-      - name: Restore dependencies
-        uses: fsackur/ci/.github/actions/setup-powershell@main
-
       - name: Generate bot token
         id: app-token
         uses: actions/create-github-app-token@v1
@@ -33,10 +30,14 @@ jobs:
           app-id: 1082187
           private-key: ${{ secrets.DUSTY_RELEASE_BOT_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-tags: true
           token: ${{ steps.app-token.outputs.token }}
+
+      - name: Restore dependencies
+        uses: fsackur/ci/.github/actions/setup-powershell@main
 
       - name: Update version
         run: |
