@@ -1,4 +1,4 @@
-name: Publish powershell
+name: Release powershell
 
 on:
   workflow_call:
@@ -20,7 +20,7 @@ defaults:
     shell: pwsh
 
 jobs:
-  publish-powershell:
+  release-powershell:
     runs-on: ubuntu-latest
     steps:
       - name: Restore dependencies
