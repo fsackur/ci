@@ -265,7 +265,7 @@ task Tag ParseManifest, {
         assert($?)
     }
 
-    $Output = git tag $Tag --no-sign *>&1 | Out-String | ForEach-Object Trim
+    $Output = git tag $Tag -m $Tag *>&1 | Out-String | ForEach-Object Trim
     if (-not $?)
     {
         if ($Output -match 'already exists')
