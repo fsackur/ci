@@ -31,3 +31,5 @@ jobs:
               "Multiple release labels found: $($ReleaseLabel -join ', '). Remove $($ReleaseLabel.Count - 1)." | Write-Host -ForegroundColor Red
               exit 1
           }
+
+          $ReleaseLabel -replace '^release-'
