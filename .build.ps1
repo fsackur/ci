@@ -46,6 +46,8 @@ param
 
     [string[]]$DotnetProjects,
 
+    [string[]]$TestPath,
+
     [hashtable]$PesterConfiguration = @{},
 
     [string]$OutputFolder = 'Build',
@@ -386,13 +388,19 @@ task Lint {
 task UnitTest Build, {
     [bool]$UseNewProcess = $DotnetProjects
 
+    $Run = $PesterConfiguration.Run
+    if ($null -eq $Run)
+    {
+        $Run = $PesterConfiguration.Run = @{}
+    }
+
+    if ($TestPath)
+    {
+        $Run.Path = $TestPath
+    }
+
     if ($UseNewProcess)
     {
-        $Run = $PesterConfiguration.Run
-        if ($null -eq $Run)
-        {
-            $Run = $PesterConfiguration.Run = @{}
-        }
         $Run.Exit = $true
         $PesterConfigJson = $PesterConfiguration | ConvertTo-Json -Depth 10 -Compress
 
