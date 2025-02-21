@@ -383,7 +383,7 @@ task Lint {
 }
 
 task UnitTest Build, {
-    [bool]$UseNewProcess = $DotnetProjects
+    [bool]$UseNewProcess = [bool]$DotnetProjects
 
     $Run = $PesterConfiguration.Run
     if ($null -eq $Run)
