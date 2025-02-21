@@ -197,7 +197,7 @@ task InstallBuildDependencies $InstallBuildDependencies
 $AssertTool = {assert (Get-Command $Tool.ToLower() -ErrorAction Ignore) "$Tool not found"}
 task AssertGit {$Tool = "git"; & $AssertTool}
 task AssertZip {$Tool = "zip"; & $AssertTool}
-task AssertGH {$Tool = "gh"; & $AssertTool}
+task AssertGH {$Tool = "gh"; & $AssertTool; assert ((gh auth status -a -h github.com) -match 'Logged in to github.com account') "GH client needs to log in"}
 
 task SelfUpdate $SelfUpdate
 
